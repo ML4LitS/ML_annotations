@@ -2,12 +2,12 @@ import csv
 import re
 
 patterns = [
-    r'(?<=Full=)[^}]+',
-    r'(?<=Name=)[^ }]+',
-    r'(?<=OrderedLocusNames=)[^ ]+',
-    r'(?<=Synonyms=)[^ }]+',
-    r'(?<=ORFNames=)[^ ]+',
-    r'Name=([^ {]+)|OrderedLocusNames=([^ ,]+)|ORFNames=([^ ,]+)'
+    # r'(?<=Full=)[^}]+',
+    # r'(?<=Name=)[^ }]+',
+    # r'(?<=OrderedLocusNames=)[^ ]+',
+    # r'(?<=Synonyms=)[^ }]+',
+    # r'(?<=ORFNames=)[^ ]+',
+    # r'Name=([^ {]+)|OrderedLocusNames=([^ ,]+)|ORFNames=([^ ,]+)'
 ]
 
 
