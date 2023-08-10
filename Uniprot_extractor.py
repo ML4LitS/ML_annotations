@@ -3,39 +3,25 @@ import csv
 
 # Patterns for extracting relevant information
 AC_PATTERN = re.compile(r"AC   (.*?);\n")
-
-DE_PATTERNS = [re.compile(pattern) for pattern in [
-    r"DE   RecName: Full=(.*?);\n",
-    r"DE   AltName: Full=(.*?);\n",
-    r"DE            Short=(.*?);\n"
-]]
-
 GN_PATTERN = re.compile(r"GN   (.+?)\n")
+DE_PATTERN = re.compile(r"DE   (.+?)\n")
 
-# List of keys we are interested in, for GN values
+# List of keys we are interested in, for GN and DE values
 GN_KEYS = ['Name', 'Synonyms', 'OrderedLocusNames', 'ORFNames', 'EC']
+DE_KEYS = ['RecName: Full', 'AltName: Full', 'Short']
 
 
-# def extract_values_from_gn_line(gn_line):
-#     gn_values = {}
-#     for key in GN_KEYS:
-#         match = re.search(f"{key}=(.*?)(;|$)", gn_line)
-#         if match:
-#             values = match.group(1).split(', ')
-#             # Remove text enclosed in { }
-#             values = [re.sub(r"\{.*?\}", "", v).strip() for v in values]
-#             gn_values[key] = values
-#     return gn_values
-def extract_values_from_gn_line(gn_line):
-    gn_values = {}
+def extract_values_from_line(line, keys):
+    values_dict = {}
     # Remove text enclosed in { }
-    # gn_line = re.sub(r"\{[^}]*\}", "", gn_line).strip() #re.sub(r"\{[^}]*\}", "", gn_line).strip()
-    for key in GN_KEYS:
-        match = re.search(f"{key}=(.*?)(;|$)", gn_line)
+    line = re.sub(r"\{.*?\}", "", line).strip()
+    for key in keys:
+        match = re.search(f"{key}=(.*?)(;|$)", line)
         if match:
             values = match.group(1).split(', ')
-            gn_values[key] = values
-    return gn_values
+            values_dict[key] = values
+    return values_dict
+
 
 def process_document(buffer, writer):
     doc = ''.join(buffer)
@@ -44,20 +30,19 @@ def process_document(buffer, writer):
     ac_value = ac_match.group(1) if ac_match else None
 
     # For DE values
-    for pattern in DE_PATTERNS:
-        de_match = pattern.search(doc)
-        if de_match:
-            de_value = de_match.group(1)
-            writer.writerow([ac_value, "DE", de_value])
+    de_matches = DE_PATTERN.findall(doc)
+    for de_line in de_matches:
+        de_values = extract_values_from_line(de_line, DE_KEYS)
+        for key, values in de_values.items():
+            for value in values:
+                writer.writerow([ac_value, "DE_" + key, value.strip()])
 
     # For GN values
     gn_matches = GN_PATTERN.findall(doc)
     for gn_line in gn_matches:
-        gn_values = extract_values_from_gn_line(gn_line)
+        gn_values = extract_values_from_line(gn_line, GN_KEYS)
         for key, values in gn_values.items():
             for value in values:
-                value = re.sub(r"\{[^}]*\}", "", value).strip()
-                value = value.replace('\"', '')
                 writer.writerow([ac_value, "GN_" + key, value.strip()])
 
 
@@ -75,5 +60,5 @@ def process_file_line_by_line(filename, csv_filename):
 
 
 filename = "/home/stirunag/work/github/source_data/uniprot/uniprot_sprot.dat"
-csv_filename = "/home/stirunag/work/github/source_data/uniprot/output_file_v2.csv"
+csv_filename = "/home/stirunag/work/github/source_data/uniprot/output_file_v3.csv"
 process_file_line_by_line(filename, csv_filename)

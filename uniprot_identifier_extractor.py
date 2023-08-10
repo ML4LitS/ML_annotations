@@ -1,16 +1,6 @@
 import csv
 import re
 
-patterns = [
-    # r'(?<=Full=)[^}]+',
-    # r'(?<=Name=)[^ }]+',
-    # r'(?<=OrderedLocusNames=)[^ ]+',
-    # r'(?<=Synonyms=)[^ }]+',
-    # r'(?<=ORFNames=)[^ ]+',
-    # r'Name=([^ {]+)|OrderedLocusNames=([^ ,]+)|ORFNames=([^ ,]+)'
-]
-
-
 def extract_information(input_file):
     with open(input_file, 'r') as file:
         ac_value = None
