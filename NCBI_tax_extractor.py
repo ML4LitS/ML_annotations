@@ -26,9 +26,9 @@ def process_column_content(s):
     #     content = re.sub(r'\w+\s+and\s+\w+\s+\d{4}', '', content)
 
     # Removing anything in parentheses or quotes
-    s = re.sub(r'\(.*?\)|\".*?\"', '', s).strip()
+    s = re.sub(r'\(.*?\)|\".*?\"|\[.*?\]', '', s).strip()
     # Removing trailing author names and dates
-    s = re.sub(r'(\s+et\s+al\..*|\s+[0-9]{4})$', '', s).strip()
+    # s = re.sub(r'(\s+et\s+al\..*|\s+[0-9]{4})$', '', s).strip()
 
     return s.strip()
 
@@ -44,7 +44,7 @@ with open(input_filename, "r") as infile, open(output_filename, "w", newline='')
 
     # Iterate through each row in the input file with a progress bar
     for row in tqdm(reader, total=total_rows, desc="Processing"):
-        row[1] = process_column_content(row[1])
-
-        # Write column 0 and modified column 1 to the output file
-        writer.writerow([row[0], row[1]])
+        if "authority" not in row[3]:
+            extracted_text = re.sub(r'\(.*?\)|\".*?\"|\[.*?\]', '', row[1]).strip()
+            # Write column 0 and modified column 1 to the output file
+            writer.writerow([row[0].strip(), extracted_text.strip()])
