@@ -1,50 +1,47 @@
 import csv
 from tqdm import tqdm
 import re
+import pickle
+import json
 
 # Input and output filenames
-input_filename = "/home/stirunag/work/github/source_data/taxdump/names.dmp"
-output_filename = "/home/stirunag/work/github/source_data/taxdump/output.csv"
+input_filename = "/home/stirunag/work/github/source_data/knowledge_base/taxdump/names.dmp"
+output_pickle_filename = "/home/stirunag/work/github/source_data/dictionaries/NCBI_taxonomy.pkl"
+output_jsonl_filename = "/home/stirunag/work/github/source_data/training_data/train_data_floret.jsonl"
 
 # Determine the total number of rows in the input file for the progress bar
 with open(input_filename, 'r') as f:
     total_rows = sum(1 for line in f)
 
+# Dictionary to hold the output data
+output_dict = {}
+
 
 # Function to process the content of column 1
 def process_column_content(s):
-    # Extract pattern from """ pattern"" and discard everything else in the string
-    # if '"' in content:
-    #     match = re.search(r'\"{3}\s*([^\"]*)\"{2}', content)
-    #     if match:
-    #         content = match.group(1)
-    #     else:
-    #         content = ""
-    # else:
-    #     # Remove patterns like "author et al." and "Yoshida and Oshima 1971"
-    #     content = re.sub(r'[\w\s]+et al\.', '', content)
-    #     content = re.sub(r'\w+\s+and\s+\w+\s+\d{4}', '', content)
-
-    # Removing anything in parentheses or quotes
     s = re.sub(r'\(.*?\)|\".*?\"|\[.*?\]', '', s).strip()
-    # Removing trailing author names and dates
-    # s = re.sub(r'(\s+et\s+al\..*|\s+[0-9]{4})$', '', s).strip()
-
     return s.strip()
 
 
-# Read the .dmp file and write the required columns to the output CSV file
-with open(input_filename, "r") as infile, open(output_filename, "w", newline='') as outfile:
-    # Create CSV reader and writer objects
+# Read the .dmp file and process the data
+with open(input_filename, "r") as infile:
+    # Create CSV reader object
     reader = csv.reader(infile, delimiter="|")
-    writer = csv.writer(outfile)
-
-    # Write the header to the output file
-    writer.writerow(["AC", "OG"])
 
     # Iterate through each row in the input file with a progress bar
     for row in tqdm(reader, total=total_rows, desc="Processing"):
         if "authority" not in row[3]:
-            extracted_text = re.sub(r'\(.*?\)|\".*?\"|\[.*?\]', '', row[1]).strip()
-            # Write column 0 and modified column 1 to the output file
-            writer.writerow([row[0].strip(), extracted_text.strip()])
+            extracted_text = process_column_content(row[1])
+            # Update the dictionary with the extracted text and corresponding identifier
+            output_dict[extracted_text] = row[0].strip()
+
+# Dump the dictionary as a pickle file
+with open(output_pickle_filename, "wb") as outfile:
+    pickle.dump(output_dict, outfile)
+
+# Append data to jsonl file
+with open(output_jsonl_filename, "a") as jsonl_file:
+    for term in output_dict.keys():
+        json_line = json.dumps({"text": term})
+        jsonl_file.write(json_line + "\n")
+
